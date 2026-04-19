@@ -77,17 +77,23 @@ function Menu () {
       <h2>Our Menu</h2>
 
       {numPizzas > 0 ? (
-        <ul className="pizzas">
-          {pizzas.map((pizza) => (
-            // <Pizza
-            //   name={pizza.name}
-            //   ingredients={pizza.ingredients}
-            //   price={pizza.price}
-            //   photoName={pizza.photoName}
-            // />
-            <Pizza key={pizza.name} pizzaObj={pizza} />
-          ))}
-        </ul>
+        <>
+          <p>
+            Authentic Italian cuisine. 6 creative dishes to choose from. All
+            from our stove oven, all organic, all delicious.
+          </p>
+          <ul className="pizzas">
+            {pizzas.map((pizza) => (
+              // <Pizza
+              //   name={pizza.name}
+              //   ingredients={pizza.ingredients}
+              //   price={pizza.price}
+              //   photoName={pizza.photoName}
+              // />
+              <Pizza key={pizza.name} pizzaObj={pizza} />
+            ))}
+          </ul>
+        </>
       ) : (
         <p>We're still working on our menu. Please come back later!</p>
       )}

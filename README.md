@@ -1457,7 +1457,409 @@ function Footer () {
 
 ---
 
-## 8. Macam-macam Cara Menambahkan Styling di React
+## 8. React Fragments - Render Multiple Elements
+
+**Lokasi:** `src/index.js` baris 80-96 (Menu component)
+
+### Masalah: JSX Harus Return Single Root Element
+
+Di JSX, component harus return **satu root element**. Kalau return lebih dari satu, akan error:
+
+```javascript
+// ❌ ERROR: More than one root element
+function Menu() {
+  return (
+    <p>Description</p>
+    <ul className="pizzas">...</ul>  // ERROR!
+  )
+}
+```
+
+**Solusi Lama: Wrap dengan `<div>`**
+```javascript
+function Menu() {
+  return (
+    <div>
+      <p>Description</p>
+      <ul className="pizzas">...</ul>
+    </div>
+  )
+}
+```
+
+**Problem dengan `<div>`:**
+- Menambah extra DOM node yang tidak perlu
+- Bisa memecahkan CSS layout (misal jika parent pakai flexbox)
+- Membuat HTML structure lebih kompleks
+
+### Solusi: React Fragment
+
+React Fragment adalah wrapper yang tidak render menjadi DOM node. Hanya child elementnya yang di-render.
+
+### A. Menu Component - Menggunakan Fragment Shorthand (baris 75-102)
+
+```javascript
+function Menu () {
+  const pizzas = pizzaData;
+  const numPizzas = pizzas.length;
+
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+
+      {numPizzas > 0 ? (
+        <>
+          <p>
+            Authentic Italian cuisine. 6 creative dishes to choose from. All
+            from our stove oven, all organic, all delicious.
+          </p>
+          <ul className="pizzas">
+            {pizzas.map((pizza) => (
+              <Pizza key={pizza.name} pizzaObj={pizza} />
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p>We're still working on our menu. Please come back later!</p>
+      )}
+    </main>
+  );
+}
+```
+
+**Penjelasan Baris per Baris:**
+
+1. **`{numPizzas > 0 ? (...) : (...)}`** (baris 79)
+   - Ternary operator untuk render dua case berbeda
+   - True case perlu return **2 elements**: `<p>` dan `<ul>`
+   - False case return **1 element**: `<p>`
+
+2. **`<>` - Fragment Shorthand** (baris 80)
+   - Buka fragment untuk render multiple elements
+   - Ini adalah shorthand untuk `<React.Fragment>`
+   - Tidak render jadi DOM element
+
+3. **Child Elements di dalam Fragment** (baris 81-95)
+   ```javascript
+   <>
+     <p>Description...</p>        {/* Element 1 */}
+     <ul className="pizzas">      {/* Element 2 */}
+       {pizzas.map(...)}
+     </ul>
+   </>
+   ```
+   - Dua sibling elements
+   - React Fragment hanya wrapper, tidak render
+
+4. **`</>` - Close Fragment** (baris 96)
+   - Menutup fragment
+   - Shorthand untuk `</React.Fragment>`
+
+**Tanpa Fragment, harus pakai extra div:**
+```javascript
+{numPizzas > 0 ? (
+  <div>  {/* ← Extra div yang tidak perlu */}
+    <p>Description...</p>
+    <ul className="pizzas">...</ul>
+  </div>
+) : (
+  <p>We're still working...</p>
+)}
+```
+
+### Dua Cara Menulis Fragment:
+
+#### 1. Shorthand `<>...</>` (Modern, Recommended)
+```javascript
+{numPizzas > 0 ? (
+  <>
+    <p>Description</p>
+    <ul className="pizzas">...</ul>
+  </>
+) : (
+  <p>Empty state</p>
+)}
+```
+
+**Pros:**
+- Lebih singkat dan clean
+- Standard practice di React modern
+- Tidak perlu import
+
+**Cons:**
+- Tidak support `key` attribute (jarang dipakai)
+- Tidak bisa pakai element dengan children (edge case)
+
+#### 2. Explicit `<React.Fragment>...</React.Fragment>`
+```javascript
+{numPizzas > 0 ? (
+  <React.Fragment>
+    <p>Description</p>
+    <ul className="pizzas">...</ul>
+  </React.Fragment>
+) : (
+  <p>Empty state</p>
+)}
+```
+
+**Pros:**
+- Explicit dan clear
+- Support `key` attribute (kalau dalam list)
+
+**Cons:**
+- Lebih verbose
+- Jarang dipakai (gunakan shorthand)
+
+### Fragment dengan Key Attribute
+
+Fragment dengan `key` hanya support di `<React.Fragment>`, bukan shorthand `<>`:
+
+```javascript
+// ❌ ERROR: Shorthand tidak support key
+{items.map((item) => (
+  <>
+    <div>{item.name}</div>
+    <div>{item.price}</div>
+  </>
+))}
+
+// ✅ BENAR: Explicit fragment dengan key
+{items.map((item) => (
+  <React.Fragment key={item.id}>
+    <div>{item.name}</div>
+    <div>{item.price}</div>
+  </React.Fragment>
+))}
+```
+
+### Kapan Gunakan Fragment?
+
+✅ **Gunakan Fragment:**
+1. **Render multiple elements tanpa wrapper**
+   ```javascript
+   return (
+     <>
+       <Header />
+       <Content />
+       <Footer />
+     </>
+   )
+   ```
+
+2. **Ternary/conditional dengan multiple elements**
+   ```javascript
+   {isOpen ? (
+     <>
+       <p>We're open!</p>
+       <button>Order Now</button>
+     </>
+   ) : null}
+   ```
+
+3. **Map dengan sibling elements**
+   ```javascript
+   {items.map((item) => (
+     <React.Fragment key={item.id}>
+       <h3>{item.name}</h3>
+       <p>{item.description}</p>
+     </React.Fragment>
+   ))}
+   ```
+
+❌ **Jangan Gunakan Fragment:**
+1. **Kalau hanya ada 1 element**
+   ```javascript
+   // ❌ Tidak perlu fragment
+   return (
+     <>
+       <p>Hello</p>
+     </>
+   )
+
+   // ✅ Langsung return element
+   return <p>Hello</p>
+   ```
+
+2. **Kalau ingin styling**
+   ```javascript
+   // ❌ Fragment tidak bisa di-style
+   return (
+     <> {/* Cannot add className */}
+       <p>Hello</p>
+       <button>Click</button>
+     </>
+   )
+
+   // ✅ Pakai div atau component wrapper
+   return (
+     <div className="wrapper">
+       <p>Hello</p>
+       <button>Click</button>
+     </div>
+   )
+   ```
+
+### Fragment vs Div - Perbandingan
+
+#### Scenario: Render description + list
+
+**Dengan Fragment (✅ Clean):**
+```javascript
+<>
+  <p>Choose your pizza</p>
+  <ul className="pizzas">
+    {pizzas.map(...)}
+  </ul>
+</>
+```
+
+Rendered HTML:
+```html
+<p>Choose your pizza</p>
+<ul className="pizzas">
+  <li>...</li>
+  <li>...</li>
+</ul>
+```
+
+**Dengan Div (❌ Extra node):**
+```javascript
+<div>
+  <p>Choose your pizza</p>
+  <ul className="pizzas">
+    {pizzas.map(...)}
+  </ul>
+</div>
+```
+
+Rendered HTML:
+```html
+<div>  <!-- Extra div! -->
+  <p>Choose your pizza</p>
+  <ul className="pizzas">
+    <li>...</li>
+    <li>...</li>
+  </ul>
+</div>
+```
+
+### Fragment dan CSS Layout
+
+Fragment particularly helpful ketika parent punya specific CSS structure:
+
+**Scenario: Parent pakai CSS Grid**
+```css
+.menu {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+}
+```
+
+**Dengan Fragment (✅ Correct structure):**
+```javascript
+<main className="menu">
+  <>
+    <h2>Menu</h2>
+    <ul className="pizzas">...</ul>
+  </>
+</main>
+```
+
+Grid items: `<h2>` dan `<ul>` (2 items) ✅
+
+**Dengan Div (❌ Wrong structure):**
+```javascript
+<main className="menu">
+  <div>
+    <h2>Menu</h2>
+    <ul className="pizzas">...</ul>
+  </div>
+</main>
+```
+
+Grid items: `<div>` (1 item) ❌
+
+### Real World Example - Menu Component
+
+Mengapa Menu component pakai Fragment?
+
+```javascript
+function Menu () {
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+
+      {numPizzas > 0 ? (
+        <>  {/* Fragment untuk wrap description + list */}
+          <p>Authentic Italian cuisine...</p>
+          <ul className="pizzas">
+            {pizzas.map(...)}
+          </ul>
+        </>
+      ) : (
+        <p>We're still working on our menu...</p>
+      )}
+    </main>
+  );
+}
+```
+
+**Why Fragment?**
+- Return 2 elements (`<p>` + `<ul>`) dalam ternary
+- Tidak ingin extra `<div>` yang memecah DOM structure
+- Main component dapat child langsung: `<h2>`, `<p>`, `<ul>` (bukan wrapped di div)
+- Cleaner, semantic HTML
+
+### Fragment Cheat Sheet
+
+```javascript
+// ✅ Return multiple sibling elements
+return (
+  <>
+    <Header />
+    <Main />
+    <Footer />
+  </>
+)
+
+// ✅ Ternary dengan multiple elements
+{isActive ? (
+  <>
+    <p>Active</p>
+    <button>Deactivate</button>
+  </>
+) : null}
+
+// ✅ Map dengan multiple elements per item (with key)
+{items.map((item) => (
+  <React.Fragment key={item.id}>
+    <h3>{item.title}</h3>
+    <p>{item.description}</p>
+  </React.Fragment>
+))}
+
+// ❌ JANGAN: Fragment dengan styling
+<> {/* Can't add className */}
+  <p>Hello</p>
+</>
+
+// ❌ JANGAN: Fragment untuk 1 element
+<>
+  <p>Hello</p>
+</>
+
+// ❌ JANGAN: Shorthand fragment dengan key
+{items.map((item) => (
+  <> {/* Can't use key here */}
+    <h3>{item.title}</h3>
+  </>
+))}
+```
+
+---
+
+## 9. Macam-macam Cara Menambahkan Styling di React
 
 **Lokasi:** `src/index.css` dan penggunaan di components
 
@@ -1638,7 +2040,7 @@ FONT SIZE SYSTEM (px)
 
 ---
 
-## 9. Array Data dan Map (Future Development)
+## 10. Array Data dan Map (Future Development)
 
 **Lokasi:** `src/index.js` baris 5-48
 
@@ -1700,10 +2102,11 @@ function Menu () {
 12. ✅ **Conditional Rendering (Ternary ? :)**: Render dua konten berbeda berdasarkan kondisi
 13. ✅ **Early Return Pattern**: Return early untuk edge cases, membuat code lebih linear
 14. ✅ **Fallback Messages**: Menampilkan helpful message ketika kondisi tidak terpenuhi
-15. ✅ **Conditional Logic**: JavaScript logic dalam components (variable, if, &&, ternary)
-16. ✅ **CSS Classes**: Styling components dengan external CSS file
-17. ✅ **Flexbox & Grid**: Layout dengan modern CSS
-18. ✅ **React.StrictMode**: Development tool untuk mendeteksi bugs
+15. ✅ **React Fragments (<> </>)**: Render multiple elements tanpa wrapper div yang tidak perlu
+16. ✅ **Conditional Logic**: JavaScript logic dalam components (variable, if, &&, ternary)
+17. ✅ **CSS Classes**: Styling components dengan external CSS file
+18. ✅ **Flexbox & Grid**: Layout dengan modern CSS
+19. ✅ **React.StrictMode**: Development tool untuk mendeteksi bugs
 
 ---
 
@@ -1711,6 +2114,23 @@ function Menu () {
 
 ### 1. ✅ Rendering Multiple Pizzas (SUDAH IMPLEMENTED)
 Sekarang menggunakan `pizzaData.map()` untuk render semua 6 pizzas dari array secara dinamis dengan semantic `<ul>` dan `<li>` tags.
+
+**Bonus - React Fragments:** Menu component menggunakan `<>...</>` untuk render dua sibling elements (`<p>` description dan `<ul>` list) tanpa extra wrapper div.
+
+```javascript
+{numPizzas > 0 ? (
+  <>
+    <p>Authentic Italian cuisine...</p>
+    <ul className="pizzas">
+      {pizzas.map((pizza) => (
+        <Pizza key={pizza.name} pizzaObj={pizza} />
+      ))}
+    </ul>
+  </>
+) : (
+  <p>We're still working on our menu...</p>
+)}
+```
 
 **Next Step:** Tambahkan filter atau search untuk filter pizzas berdasarkan ingredient atau price range.
 
