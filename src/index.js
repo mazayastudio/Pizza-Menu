@@ -95,6 +95,8 @@ function Menu () {
 }
 
 function Pizza (props) {
+  if (props.pizzaObj.soldOut) return null;
+
   return (
     <li className='pizza'>
       <img src={props.pizzaObj.photoName} alt={props.pizzaObj.name}/>
@@ -117,14 +119,7 @@ function Footer () {
   return (
     <footer className="footer">
       {isOpen ? (
-        <div className="order">
-          <p>
-            {new Date().toLocaleTimeString()}. We're currently open until{" "}
-            {closeHour}:00. Come visit us or order online.
-          </p>
-          <button className="btn">Order Now</button>
-          <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
-        </div>
+        <Order close={closeHour} />
       ) : (
         <div className="order">
           <p>
@@ -135,6 +130,19 @@ function Footer () {
         </div>
       )}
     </footer>
+  );
+}
+
+function Order(props) {
+  return (
+    <div className="order">
+      <p>
+        {new Date().toLocaleTimeString()}. We're currently open until{" "}
+        {props.close}:00. Come visit us or order online.
+      </p>
+      <button className="btn">Order Now</button>
+      <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
+    </div>
   );
 }
 
