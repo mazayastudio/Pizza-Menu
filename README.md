@@ -457,7 +457,310 @@ Menggunakan ternary operator untuk conditional CSS class berdasarkan `soldOut` p
 
 ---
 
-## 5. Macam-macam Cara Menambahkan Styling di React
+## 5. Conditional Rendering dengan && (Logical AND Operator)
+
+**Lokasi:** `src/index.js` baris 78-90 (Menu), baris 117-126 (Footer)
+
+### Apa itu Conditional Rendering?
+
+Conditional rendering adalah menampilkan atau menyembunyikan JSX elements berdasarkan kondisi tertentu. Ini memungkinkan UI berubah dinamis sesuai state atau data.
+
+### Tiga Cara Conditional Rendering di React:
+
+#### 1. **Ternary Operator** (condition ? true : false)
+```javascript
+{isOpen ? <p>We're open!</p> : <p>We're closed!</p>}
+```
+- Menampilkan dua konten berbeda berdasarkan kondisi
+- Selalu render salah satu dari dua opsi
+
+#### 2. **Logical AND (&&)** - Yang akan kita pelajari
+```javascript
+{numPizzas > 0 && <ul className="pizzas">...</ul>}
+```
+- Menampilkan konten hanya jika kondisi TRUE
+- Tidak menampilkan apa-apa jika kondisi FALSE
+- Lebih clean dan readable untuk true-only case
+
+#### 3. **If Statement** (di JavaScript logic)
+```javascript
+let content;
+if (isOpen) {
+  content = <div className="order">...</div>;
+}
+return <footer>{content}</footer>;
+```
+- Menggunakan JavaScript logic sebelum return
+
+### Pattern: Logical AND (&&) - Fokus Pembahasan
+
+#### A. Menu Component - Render List hanya jika Ada Pizzas (baris 71-93)
+
+```javascript
+function Menu () {
+  const pizzas = pizzaData;
+  const numPizzas = pizzas.length;
+
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      {numPizzas > 0 && (
+        <ul className="pizzas">
+          {pizzas.map((pizza) => (
+            <Pizza key={pizza.name} pizzaObj={pizza} />
+          ))}
+        </ul>
+      )}
+    </main>
+  );
+}
+```
+
+**Penjelasan Baris per Baris:**
+
+1. **`const pizzas = pizzaData;`** (baris 72)
+   - Membuat variable `pizzas` yang refer ke array `pizzaData`
+   - Ini adalah shorthand/alias untuk `pizzaData`
+
+2. **`const numPizzas = pizzas.length;`** (baris 73)
+   - Menghitung jumlah items di array
+   - `pizzaData` memiliki 6 items, jadi `numPizzas = 6`
+
+3. **`{numPizzas > 0 && (...)`** (baris 78)
+   - **Kondisi**: `numPizzas > 0` (apakah ada minimum 1 pizza?)
+   - **Operator &&**: Logical AND
+   - Jika TRUE: render `<ul>...</ul>`
+   - Jika FALSE: render `null` (tidak ada apa-apa)
+
+**Bagaimana && Bekerja di JavaScript:**
+
+```javascript
+// Pattern: condition && expression
+
+true && "Hello"   // hasil: "Hello" (kanan di-evaluate)
+false && "Hello"  // hasil: false (kanan tidak di-evaluate)
+
+5 > 0 && "Five is greater"  // hasil: "Five is greater"
+5 < 0 && "Five is greater"  // hasil: false (tidak ditampilkan)
+```
+
+**Di React JSX:**
+
+```javascript
+// Jika numPizzas = 6 (true)
+{6 > 0 && <ul>...</ul>}
+// render: <ul>...</ul>
+
+// Jika numPizzas = 0 (false)
+{0 > 0 && <ul>...</ul>}
+// render: null (tidak ada apa-apa)
+```
+
+**Use Case:**
+- Tampilkan menu list hanya jika ada pizzas
+- Jika tidak ada pizzas (misal belum load dari API), tidak tampil list kosong yang aneh
+
+#### B. Footer Component - Render Order Section hanya jika Open (baris 108-129)
+
+```javascript
+function Footer () {
+  const hour = new Date().getHours()
+  const openHour = 8;
+  const closeHour = 22
+  const isOpen = hour >= openHour && hour <= closeHour
+
+  return (
+    <footer className="footer">
+      {isOpen && (
+        <div className="order">
+          <p>
+            {new Date().toLocaleTimeString()}. We're currently open until{" "}
+            {closeHour}:00. Come visit us or order online.
+          </p>
+          <button className="btn">Order Now</button>
+          <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
+        </div>
+      )}
+    </footer>
+  );
+}
+```
+
+**Penjelasan Baris per Baris:**
+
+1. **`const hour = new Date().getHours()`** (baris 109)
+   - Mendapatkan jam saat ini (0-23)
+   - Contoh: pukul 14:30 → `hour = 14`
+
+2. **`const openHour = 8; const closeHour = 22`** (baris 110-111)
+   - Jam buka: 08:00 (8 pagi)
+   - Jam tutup: 22:00 (10 malam)
+
+3. **`const isOpen = hour >= openHour && hour <= closeHour`** (baris 112)
+   - **Kondisi compound**: Dua kondisi dengan &&
+   - `hour >= 8` AND `hour <= 22`
+   - Contoh: jam 14:00 → `14 >= 8 && 14 <= 22` → `true && true` → `true`
+   - Contoh: jam 23:00 → `23 >= 8 && 23 <= 22` → `true && false` → `false`
+
+4. **`{isOpen && (...)`** (baris 117)
+   - Jika `isOpen` TRUE: render order section dengan pesan dan button
+   - Jika `isOpen` FALSE: render nothing
+
+5. **`{new Date().toLocaleTimeString()}`** (baris 120)
+   - Menampilkan waktu saat ini dalam format readable
+   - Contoh: "2:30:45 PM"
+
+6. **`{" "}`** (baris 120-121)
+   - Space kosong untuk formatting
+   - Dalam JSX, whitespace diabaikan, jadi perlu `{" "}` untuk space
+
+7. **`{closeHour}:00`** (baris 121)
+   - Menampilkan jam tutup
+   - Contoh: "22:00"
+
+**User Experience Improvement:**
+- **Buka (08:00 - 22:00)**: User melihat pesan "We're open until 22:00" dan button "Order Now" ✅
+- **Tutup (23:00 - 07:59)**: Footer kosong, tidak menampilkan order section (bisa diubah dengan fallback message) ❌
+
+### Visualisasi Flow:
+
+**Scenario 1: Ada Pizzas (Menu)**
+```
+pizzaData: [pizza1, pizza2, pizza3, ...]
+    ↓
+numPizzas = 6
+    ↓
+numPizzas > 0?  → TRUE ✅
+    ↓
+Render: <ul className="pizzas">...</ul>
+```
+
+**Scenario 2: Tidak Ada Pizzas**
+```
+pizzaData: []
+    ↓
+numPizzas = 0
+    ↓
+numPizzas > 0?  → FALSE ❌
+    ↓
+Render: null (nothing)
+```
+
+**Scenario 3: Toko Buka (Footer)**
+```
+hour = 14 (2 PM)
+    ↓
+isOpen = 14 >= 8 && 14 <= 22  → TRUE ✅
+    ↓
+Render: <div className="order">...</div>
+```
+
+**Scenario 4: Toko Tutup**
+```
+hour = 23 (11 PM)
+    ↓
+isOpen = 23 >= 8 && 23 <= 22  → FALSE ❌
+    ↓
+Render: null (nothing)
+```
+
+### Perbedaan Ternary vs Logical AND:
+
+```javascript
+// ✅ Gunakan Ternary ketika ada dua opsi berbeda
+{isOpen ? <p>Open!</p> : <p>Closed!</p>}
+
+// ✅ Gunakan && ketika hanya show/hide (satu opsi)
+{isOpen && <p>We're open, come visit us!</p>}
+
+// ❌ JANGAN: && dengan false case yang kompleks
+{isOpen && <p>Open</p> : <p>Closed</p>}  // ERROR: syntax salah
+
+// ❌ JANGAN: gunakan || untuk render jika false
+{!isOpen || <p>We're open</p>}  // confusing, gunakan ternary
+```
+
+### Common Patterns:
+
+#### Pattern 1: Render List atau Empty State
+```javascript
+{numPizzas > 0 && (
+  <ul className="pizzas">
+    {pizzas.map(pizza => <Pizza key={pizza.name} pizzaObj={pizza} />)}
+  </ul>
+)}
+```
+
+#### Pattern 2: Render Action Button hanya jika Condition Met
+```javascript
+{isOpen && <button className="btn">Order Now</button>}
+```
+
+#### Pattern 3: Render Multiple Elements
+```javascript
+{isOpen && (
+  <div>
+    <p>We're open!</p>
+    <button>Order</button>
+    <p>Jam tutup: 22:00</p>
+  </div>
+)}
+```
+
+Parentheses `()` diperlukan ketika rendering lebih dari satu element.
+
+#### Pattern 4: Render dengan Ternary untuk Default Message
+```javascript
+{isOpen ? (
+  <div className="order">Come visit us!</div>
+) : (
+  <p>We're closed. Buka besok jam 08:00</p>
+)}
+```
+
+### Troubleshooting:
+
+**Problem 1: "false", "undefined", "null" ditampilkan**
+```javascript
+// ❌ SALAH: false render sebagai string
+{isDone && false}     // show: "false"
+{isDone && undefined} // show: "undefined"
+
+// ✅ BENAR:
+{isDone && <p>Done!</p>}  // show: JSX atau null
+```
+
+**Problem 2: Lupa parentheses untuk multiple elements**
+```javascript
+// ❌ ERROR:
+{isOpen && (
+  <p>Open</p>
+  <button>Order</button>  // ERROR: more than one root element
+)}
+
+// ✅ BENAR: wrap dalam fragment atau div
+{isOpen && (
+  <>
+    <p>Open</p>
+    <button>Order</button>
+  </>
+)}
+```
+
+**Problem 3: Complex condition sulit dibaca**
+```javascript
+// ❌ Sulit dibaca:
+{hour >= 8 && hour <= 22 && userLoggedIn && !hasOrdered && <button>Order</button>}
+
+// ✅ Lebih baik: extract ke variable
+const isOpen = hour >= 8 && hour <= 22;
+const canOrder = userLoggedIn && !hasOrdered;
+{isOpen && canOrder && <button>Order</button>}
+```
+
+---
+
+## 6. Macam-macam Cara Menambahkan Styling di React
 
 **Lokasi:** `src/index.css` dan penggunaan di components
 
@@ -638,7 +941,7 @@ FONT SIZE SYSTEM (px)
 
 ---
 
-## 6. Array Data dan Map (Future Development)
+## 7. Array Data dan Map (Future Development)
 
 **Lokasi:** `src/index.js` baris 5-48
 
@@ -695,9 +998,11 @@ function Menu () {
 7. ✅ **Array.map()**: Transform array menjadi multiple React components
 8. ✅ **Key Attribute**: Unique identifier untuk list items (penting untuk React performance)
 9. ✅ **Semantic HTML**: Menggunakan `<ul>`, `<li>` untuk list items
-10. ✅ **CSS Classes**: Styling components dengan external CSS file
-11. ✅ **Flexbox & Grid**: Layout dengan modern CSS
-12. ✅ **React.StrictMode**: Development tool untuk mendeteksi bugs
+10. ✅ **Conditional Rendering (&&)**: Render element hanya jika kondisi TRUE dengan logical AND operator
+11. ✅ **Conditional Logic**: JavaScript logic dalam components (variable, if, &&, ternary)
+12. ✅ **CSS Classes**: Styling components dengan external CSS file
+13. ✅ **Flexbox & Grid**: Layout dengan modern CSS
+14. ✅ **React.StrictMode**: Development tool untuk mendeteksi bugs
 
 ---
 
@@ -708,15 +1013,38 @@ Sekarang menggunakan `pizzaData.map()` untuk render semua 6 pizzas dari array se
 
 **Next Step:** Tambahkan filter atau search untuk filter pizzas berdasarkan ingredient atau price range.
 
-### 2. Conditional Rendering - Show/Hide based on Condition
-Gunakan ternary operator untuk show/hide konten:
+### 2. ✅ Conditional Rendering - Show/Hide based on Condition (SUDAH IMPLEMENTED)
+Sekarang menggunakan **logical AND (&&)** untuk show/hide konten:
 
+**Menu Component:**
 ```javascript
-// Di Footer - Show opening hours
-{isOpen ? <p>We're open!</p> : <p>Sorry, we're closed</p>}
+{numPizzas > 0 && (
+  <ul className="pizzas">
+    {pizzas.map(...)}
+  </ul>
+)}
+```
+Render list hanya jika ada pizzas.
 
-// Di Pizza - Show sold-out status
-{pizza.soldOut ? <p className="sold-out">SOLD OUT</p> : <p>Available</p>}
+**Footer Component:**
+```javascript
+{isOpen && (
+  <div className="order">
+    <p>We're currently open until {closeHour}:00. Come visit us or order online.</p>
+    <button className="btn">Order Now</button>
+  </div>
+)}
+```
+Render order section hanya jika toko sedang buka (08:00 - 22:00).
+
+**Next Step (Optional):**
+- Tambahkan fallback message ketika toko tutup:
+```javascript
+{isOpen ? (
+  <div className="order">We're open!</div>
+) : (
+  <p>Sorry, we're closed. Opening tomorrow at 08:00</p>
+)}
 ```
 
 ### 3. ✅ Conditional CSS Classes (READY TO IMPLEMENT)
