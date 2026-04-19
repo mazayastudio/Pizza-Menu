@@ -1106,7 +1106,358 @@ const handleRender = () => {
 
 ---
 
-## 7. Macam-macam Cara Menambahkan Styling di React
+## 7. Destructuring Props - Cleaner Code Syntax
+
+**Lokasi:** `src/index.js` baris 97 (Pizza), baris 136 (Order)
+
+### Apa itu Destructuring?
+
+Destructuring adalah cara untuk extract nilai dari object dan assign ke variable secara langsung. Di React, ini membuat component code lebih clean dan readable.
+
+### Sebelum vs Sesudah Destructuring:
+
+#### ❌ Sebelum (Menggunakan props object)
+```javascript
+function Pizza(props) {
+  return (
+    <li className="pizza">
+      <img src={props.pizzaObj.photoName} alt={props.pizzaObj.name}/>
+      <div>
+        <h3>{props.pizzaObj.name}</h3>
+        <p>{props.pizzaObj.ingredients}</p>
+        <span>${props.pizzaObj.price}</span>
+      </div>
+    </li>
+  )
+}
+```
+
+**Problem:**
+- Perlu menulis `props.pizzaObj.` berulang kali
+- Sulit dibaca, noisy dengan repetisi
+
+#### ✅ Sesudah (Dengan Destructuring)
+```javascript
+function Pizza({ pizzaObj }) {
+  return (
+    <li className="pizza">
+      <img src={pizzaObj.photoName} alt={pizzaObj.name}/>
+      <div>
+        <h3>{pizzaObj.name}</h3>
+        <p>{pizzaObj.ingredients}</p>
+        <span>${pizzaObj.price}</span>
+      </div>
+    </li>
+  )
+}
+```
+
+**Keuntungan:**
+- Langsung akses `pizzaObj` tanpa prefix `props.`
+- Code lebih clean dan readable
+- Jelas apa props yang digunakan
+
+### A. Pizza Component - Destructuring dalam Parameter (baris 97-110)
+
+```javascript
+function Pizza({ pizzaObj }) {
+  if (pizzaObj.soldOut) return null;
+
+  return (
+    <li className="pizza">
+      <img src={pizzaObj.photoName} alt={pizzaObj.name} />
+      <div>
+        <h3>{pizzaObj.name}</h3>
+        <p>{pizzaObj.ingredients}</p>
+        <span>${pizzaObj.price}</span>
+      </div>
+    </li>
+  );
+}
+```
+
+**Penjelasan Baris per Baris:**
+
+1. **`function Pizza({ pizzaObj })`** (baris 97)
+   - **Destructuring di parameter**: Langsung extract `pizzaObj` dari props
+   - Equivalent dengan: `function Pizza(props) { const { pizzaObj } = props; }`
+   - Lebih singkat dan langsung
+
+2. **`if (pizzaObj.soldOut) return null;`** (baris 98)
+   - **Early Return Pattern**: Return early jika kondisi terpenuhi
+   - Jika `pizzaObj.soldOut === true`: return `null` (render nothing)
+   - Jika `pizzaObj.soldOut === false`: lanjut ke code berikutnya
+   - **Benefit**: Menghindari nested JSX, code lebih linear
+
+3. **Menggunakan `pizzaObj` langsung** (baris 102-106)
+   - `pizzaObj.photoName`, `pizzaObj.name`, dll
+   - Tidak perlu `props.pizzaObj.name` lagi
+
+**Contoh Data Flow:**
+
+```
+Menu Component:
+  <Pizza key={pizza.name} pizzaObj={pizza} />
+
+Pizza Component:
+  Props yang dikirim: { pizzaObj: { name: "Pizza Salamino", soldOut: true, ... } }
+
+  Destructuring:
+  function Pizza({ pizzaObj }) {
+    // pizzaObj = { name: "Pizza Salamino", soldOut: true, ... }
+  }
+
+  Early Return:
+  if (pizzaObj.soldOut) return null;  // Return null karena soldOut: true
+```
+
+### B. Order Component - Destructuring Multiple Props (baris 136-147)
+
+Komponen baru yang di-extract dari Footer untuk better composition:
+
+```javascript
+function Order({ close }) {
+  return (
+    <div className="order">
+      <p>
+        {new Date().toLocaleTimeString()}. We're currently open until {close}
+        :00. Come visit us or order online.
+      </p>
+      <button className="btn">Order Now</button>
+      <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
+    </div>
+  );
+}
+```
+
+**Penjelasan:**
+
+1. **`function Order({ close })`** (baris 136)
+   - Destructuring satu prop `close` dari parameter
+   - Ini adalah shorthand untuk `function Order(props) { const { close } = props; }`
+   - Prop ini dikirim dari Footer: `<Order close={closeHour} />`
+
+2. **Menggunakan `close` langsung** (baris 140)
+   - `{close}:00` menampilkan jam tutup
+   - Contoh: jika `closeHour = 22`, render "22:00"
+
+**Contoh Data Flow:**
+
+```
+Footer Component:
+  const closeHour = 22
+  <Order close={closeHour} />
+
+Order Component:
+  Props yang dikirim: { close: 22 }
+
+  Destructuring:
+  function Order({ close }) {
+    // close = 22
+  }
+
+  Render:
+  "We're currently open until 22:00"
+```
+
+### Variasi Destructuring:
+
+#### 1. Single Prop
+```javascript
+function Order({ close }) {
+  return <p>Until {close}:00</p>
+}
+
+// Usage:
+<Order close={22} />
+```
+
+#### 2. Multiple Props
+```javascript
+function Pizza({ name, price, ingredients }) {
+  return (
+    <div>
+      <h3>{name}</h3>
+      <p>{ingredients}</p>
+      <span>${price}</span>
+    </div>
+  )
+}
+
+// Usage:
+<Pizza name="Margherita" price={10} ingredients="Tomato and mozzarella" />
+```
+
+#### 3. Object Prop
+```javascript
+function Pizza({ pizzaObj }) {
+  return (
+    <div>
+      <h3>{pizzaObj.name}</h3>
+      <span>${pizzaObj.price}</span>
+    </div>
+  )
+}
+
+// Usage:
+<Pizza pizzaObj={{ name: "Margherita", price: 10 }} />
+```
+
+#### 4. Deep Destructuring (Dari nested object)
+```javascript
+function Pizza({ pizzaObj: { name, price } }) {
+  return (
+    <div>
+      <h3>{name}</h3>
+      <span>${price}</span>
+    </div>
+  )
+}
+
+// Usage:
+<Pizza pizzaObj={{ name: "Margherita", price: 10 }} />
+// Langsung akses name dan price tanpa pizzaObj.name
+```
+
+#### 5. Default Values
+```javascript
+function Order({ close = 22 }) {
+  return <p>Until {close}:00</p>
+}
+
+// Jika tidak ada prop close, default ke 22
+<Order />  // akan render "Until 22:00"
+```
+
+### Early Return Pattern - Kenapa Penting?
+
+**❌ Tanpa Early Return (Nested):**
+```javascript
+function Pizza({ pizzaObj }) {
+  return (
+    <li>
+      {!pizzaObj.soldOut ? (
+        <div>
+          <h3>{pizzaObj.name}</h3>
+          <p>{pizzaObj.ingredients}</p>
+          <span>${pizzaObj.price}</span>
+        </div>
+      ) : null}
+    </li>
+  )
+}
+```
+- Nested ternary membuat code sulit dibaca
+- JSX structure kompleks
+
+**✅ Dengan Early Return (Linear):**
+```javascript
+function Pizza({ pizzaObj }) {
+  if (pizzaObj.soldOut) return null;
+
+  return (
+    <li>
+      <h3>{pizzaObj.name}</h3>
+      <p>{pizzaObj.ingredients}</p>
+      <span>${pizzaObj.price}</span>
+    </li>
+  )
+}
+```
+- Code flow lebih linear
+- Mudah dibaca dan maintain
+- Early exit untuk edge cases
+
+### Kapan Gunakan Destructuring:
+
+✅ **Gunakan Destructuring:**
+- Ketika props sering diakses (lebih dari 2-3 kali)
+- Untuk membuat code lebih readable
+- Standard practice di React modern
+
+❌ **Tidak perlu Destructuring:**
+- Hanya mengakses 1-2 props
+- Props dinamis (tidak tahu nama prop sebelumnya)
+
+```javascript
+// OK tanpa destructuring jika props minimal:
+function Header(props) {
+  return <h1>{props.title}</h1>
+}
+
+// Baik dengan destructuring jika props banyak:
+function Pizza({ pizzaObj }) {
+  // mengakses pizzaObj.name, pizzaObj.price, dll
+}
+```
+
+### Comparison: Component Composition Improvement
+
+**Sebelum (Semua di Footer):**
+```javascript
+function Footer () {
+  const hour = new Date().getHours()
+  const isOpen = hour >= 12 && hour <= 22
+
+  return (
+    <footer>
+      {isOpen ? (
+        <div className="order">
+          <p>{new Date().toLocaleTimeString()}. We're currently open until 22:00...</p>
+          <button className="btn">Order Now</button>
+          <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
+        </div>
+      ) : (
+        <div className="order">
+          <p>We're closed right now. Come back between 12:00 and 22:00.</p>
+          <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
+        </div>
+      )}
+    </footer>
+  );
+}
+```
+
+**Sesudah (Terpisah menjadi Order component):**
+```javascript
+function Order({ close }) {
+  return (
+    <div className="order">
+      <p>{new Date().toLocaleTimeString()}. We're currently open until {close}:00...</p>
+      <button className="btn">Order Now</button>
+      <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
+    </div>
+  );
+}
+
+function Footer () {
+  const hour = new Date().getHours()
+  const isOpen = hour >= 12 && hour <= 22
+
+  return (
+    <footer className="footer">
+      {isOpen ? (
+        <Order close={22} />
+      ) : (
+        <div className="order">
+          <p>We're closed right now. Come back between 12:00 and 22:00.</p>
+          <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
+        </div>
+      )}
+    </footer>
+  );
+}
+```
+
+**Keuntungan:**
+- Order component bisa dipakai di tempat lain (reusable)
+- Footer component lebih singkat dan fokus
+- Setiap component punya satu responsibility
+- Lebih mudah di-test
+
+---
+
+## 8. Macam-macam Cara Menambahkan Styling di React
 
 **Lokasi:** `src/index.css` dan penggunaan di components
 
@@ -1287,7 +1638,7 @@ FONT SIZE SYSTEM (px)
 
 ---
 
-## 8. Array Data dan Map (Future Development)
+## 9. Array Data dan Map (Future Development)
 
 **Lokasi:** `src/index.js` baris 5-48
 
@@ -1340,17 +1691,19 @@ function Menu () {
 3. ✅ **Function Components**: Membuat components sebagai functions yang return JSX
 4. ✅ **Component Composition**: Membuat struktur aplikasi dari komponen-komponen kecil
 5. ✅ **Props**: Mengirim data dari parent ke child components
-6. ✅ **Dynamic Content**: Menggunakan JavaScript expressions dalam JSX dengan curly braces
-7. ✅ **Array.map()**: Transform array menjadi multiple React components
-8. ✅ **Key Attribute**: Unique identifier untuk list items (penting untuk React performance)
-9. ✅ **Semantic HTML**: Menggunakan `<ul>`, `<li>` untuk list items
-10. ✅ **Conditional Rendering (&&)**: Render element hanya jika kondisi TRUE dengan logical AND operator
-11. ✅ **Conditional Rendering (Ternary ? :)**: Render dua konten berbeda berdasarkan kondisi
-12. ✅ **Fallback Messages**: Menampilkan helpful message ketika kondisi tidak terpenuhi (empty state, closed state)
-13. ✅ **Conditional Logic**: JavaScript logic dalam components (variable, if, &&, ternary)
-14. ✅ **CSS Classes**: Styling components dengan external CSS file
-15. ✅ **Flexbox & Grid**: Layout dengan modern CSS
-16. ✅ **React.StrictMode**: Development tool untuk mendeteksi bugs
+6. ✅ **Destructuring Props**: Extract props langsung di function parameter untuk cleaner code
+7. ✅ **Dynamic Content**: Menggunakan JavaScript expressions dalam JSX dengan curly braces
+8. ✅ **Array.map()**: Transform array menjadi multiple React components
+9. ✅ **Key Attribute**: Unique identifier untuk list items (penting untuk React performance)
+10. ✅ **Semantic HTML**: Menggunakan `<ul>`, `<li>` untuk list items
+11. ✅ **Conditional Rendering (&&)**: Render element hanya jika kondisi TRUE dengan logical AND operator
+12. ✅ **Conditional Rendering (Ternary ? :)**: Render dua konten berbeda berdasarkan kondisi
+13. ✅ **Early Return Pattern**: Return early untuk edge cases, membuat code lebih linear
+14. ✅ **Fallback Messages**: Menampilkan helpful message ketika kondisi tidak terpenuhi
+15. ✅ **Conditional Logic**: JavaScript logic dalam components (variable, if, &&, ternary)
+16. ✅ **CSS Classes**: Styling components dengan external CSS file
+17. ✅ **Flexbox & Grid**: Layout dengan modern CSS
+18. ✅ **React.StrictMode**: Development tool untuk mendeteksi bugs
 
 ---
 
@@ -1397,51 +1750,103 @@ Sekarang menggunakan **ternary operator (? :)** untuk tampilkan konten yang berb
 
 **Key Improvement:** Kedua komponen sekarang punya fallback yang user-friendly, bukan hanya kosong/blank.
 
-### 3. ✅ Conditional CSS Classes (READY TO IMPLEMENT)
-Tambahkan dynamic class berdasarkan `soldOut` property:
+### 3. ✅ Conditional CSS Classes + Early Return (SUDAH IMPLEMENTED)
+Pizza component sekarang menggunakan early return untuk hide sold-out items:
 
 ```javascript
-function Pizza ({ pizzaObj }) {
+function Pizza({ pizzaObj }) {
+  if (pizzaObj.soldOut) return null;  // Early return
+
   return (
-    <li className={pizzaObj.soldOut ? 'pizza sold-out' : 'pizza'}>
-      {/* content */}
+    <li className="pizza">
+      <img src={pizzaObj.photoName} alt={pizzaObj.name} />
+      <div>
+        <h3>{pizzaObj.name}</h3>
+        <p>{pizzaObj.ingredients}</p>
+        <span>${pizzaObj.price}</span>
+      </div>
     </li>
+  );
+}
+```
+
+**Improvement:**
+- Early return untuk handle soldOut case
+- Code lebih linear (tidak nested)
+- Sold-out items tidak render di list
+
+### 4. ✅ Destructuring Props - Cleaner Code (SUDAH IMPLEMENTED)
+Sekarang menggunakan destructuring di function parameter:
+
+**Pizza Component:**
+```javascript
+function Pizza({ pizzaObj }) {
+  // Direct akses: pizzaObj.name, pizzaObj.price, dll
+  return <h3>{pizzaObj.name}</h3>
+}
+```
+
+**Order Component (Baru):**
+```javascript
+function Order({ close }) {
+  return <p>Until {close}:00</p>
+}
+
+// Digunakan di Footer:
+<Order close={closeHour} />
+```
+
+**Keuntungan Destructuring:**
+- Cleaner, tidak perlu `props.` prefix
+- Jelas apa props yang digunakan
+- Standard practice di React modern
+
+### 5. ✅ Component Composition & Reusable Components (SUDAH IMPLEMENTED)
+Order component di-extract dari Footer untuk reusability:
+
+**Sebelum (Order inline di Footer):**
+```javascript
+function Footer() {
+  return (
+    <footer>
+      {isOpen ? (
+        <div className="order">
+          <p>{new Date().toLocaleTimeString()}. We're open until 22:00...</p>
+          <button className="btn">Order Now</button>
+        </div>
+      ) : (...)}
+    </footer>
   )
 }
 ```
 
-CSS already ada di `index.css`:
-```css
-.pizza.sold-out {
-  color: #888;
-}
-.pizza.sold-out img {
-  filter: grayscale();
-  opacity: 0.8;
-}
-```
-
-### 4. Destructuring Props - Cleaner Code
-Alih-alih `props.pizzaObj.name`, destructure di function parameter:
-
+**Sesudah (Order sebagai component terpisah):**
 ```javascript
-// Sebelum:
-function Pizza (props) {
-  return <h3>{props.pizzaObj.name}</h3>
+function Order({ close }) {
+  return (
+    <div className="order">
+      <p>We're open until {close}:00...</p>
+      <button className="btn">Order Now</button>
+    </div>
+  )
 }
 
-// Sesudah (lebih clean):
-function Pizza ({ pizzaObj }) {
-  return <h3>{pizzaObj.name}</h3>
-}
-
-// Atau destructure lebih dalam:
-function Pizza ({ pizzaObj: { name, price, ingredients, photoName } }) {
-  return <h3>{name}</h3>
+function Footer() {
+  return (
+    <footer>
+      {isOpen ? <Order close={closeHour} /> : ...}
+    </footer>
+  )
 }
 ```
 
-### 5. State Management dengan useState (Untuk Future)
+**Benefits:**
+- Order component reusable di tempat lain
+- Footer lebih clean dan fokus
+- Single responsibility principle
+- Lebih mudah di-test
+
+### 6. State Management dengan useState (Untuk Future)
 Ketika perlu data yang berubah (interaktif), gunakan `useState` hook:
 
 ```javascript
@@ -1456,7 +1861,7 @@ function Menu () {
 }
 ```
 
-### 6. Spread Operator untuk Props
+### 7. Spread Operator untuk Props
 Gunakan spread operator untuk pass multiple props lebih singkat:
 
 ```javascript
