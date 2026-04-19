@@ -75,7 +75,7 @@ function Menu () {
   return (
     <main className="menu">
       <h2>Our Menu</h2>
-      {numPizzas > 0 && (
+      {numPizzas > 0 ? (
         <ul className="pizzas">
           {pizzas.map((pizza) => (
             // <Pizza
@@ -87,6 +87,8 @@ function Menu () {
             <Pizza key={pizza.name} pizzaObj={pizza} />
           ))}
         </ul>
+      ) : (
+        <p>We're still working on our menu. Please come back later!</p>
       )}
     </main>
   );
@@ -107,20 +109,28 @@ function Pizza (props) {
 
 function Footer () {
   const hour = new Date().getHours()
-  const openHour = 8;
+  const openHour = 12;
   const closeHour = 22
   const isOpen = hour >= openHour && hour <= closeHour
 
 
   return (
     <footer className="footer">
-      {isOpen && (
+      {isOpen ? (
         <div className="order">
           <p>
             {new Date().toLocaleTimeString()}. We're currently open until{" "}
             {closeHour}:00. Come visit us or order online.
           </p>
           <button className="btn">Order Now</button>
+          <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
+        </div>
+      ) : (
+        <div className="order">
+          <p>
+            We're closed right now. Come back between {openHour}:00 and{" "}
+            {closeHour}:00.
+          </p>
           <p>© 2023 Fast React Pizza Co. All rights reserved.</p>
         </div>
       )}
