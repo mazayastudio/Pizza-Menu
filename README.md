@@ -224,7 +224,240 @@ pizzaData.map(pizza => <Pizza {...pizza} />)
 
 ---
 
-## 4. Macam-macam Cara Menambahkan Styling di React
+## 4. Rendering Lists
+
+**Lokasi:** `src/index.js` baris 71-101 (Menu dan Pizza components)
+
+### Apa itu Rendering Lists?
+
+Rendering lists adalah menampilkan banyak items dari array menjadi multiple components. Ini adalah pattern yang sangat umum di React untuk menampilkan data yang dinamis dan dapat berubah.
+
+### Transformasi dari Hardcode ke Dynamic List:
+
+#### Sebelum (Hardcoded Single Item):
+```javascript
+function Menu () {
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      <Pizza
+        name='Pizza Spinaci'
+        ingredients='Tomato, mozarella, spinach, and ricotta cheese'
+        price={12}
+        photoName='pizzas/spinaci.jpg'
+      />
+    </main>
+  )
+}
+```
+
+#### Sesudah (Dynamic List dengan .map()):
+```javascript
+function Menu () {
+  return (
+    <main className="menu">
+      <h2>Our Menu</h2>
+      <ul className='pizzas'>
+        {pizzaData.map((pizza) => (
+          <Pizza key={pizza.name} pizzaObj={pizza}/>
+        ))}
+      </ul>
+    </main>
+  )
+}
+```
+
+### Penjelasan Baris per Baris:
+
+#### A. Semantic HTML - `<ul>` dan `<li>` (baris 75, 92)
+
+**Menu Component (baris 75):**
+```javascript
+<ul className='pizzas'>
+  // list items di sini
+</ul>
+```
+
+**Pizza Component (baris 92):**
+```javascript
+<li className='pizza'>
+  // pizza content di sini
+</li>
+```
+
+**Penjelasan:**
+- **`<ul>`** (Unordered List): Semantic HTML tag untuk daftar items tanpa urutan spesifik
+- **`<li>`** (List Item): Semantic HTML tag untuk setiap item di dalam list
+- Sebelumnya menggunakan `<div>`, sekarang lebih semantic dan accessible
+- Browser dan screen readers bisa lebih baik memahami struktur
+
+#### B. Array.map() - Transform Array ke JSX Elements (baris 76-84)
+
+```javascript
+{pizzaData.map((pizza) => (
+  <Pizza key={pizza.name} pizzaObj={pizza}/>
+))}
+```
+
+**Penjelasan:**
+
+1. **`pizzaData.map()`** (baris 76): Method JavaScript untuk transform setiap item di array
+   - `pizzaData` adalah array dari 6 pizza objects (lihat baris 5-48)
+   - `.map()` adalah higher-order function yang menerima callback function
+
+2. **`(pizza) =>`** (baris 76): Arrow function yang menerima satu parameter
+   - `pizza` adalah satu object dari array (misal: `{ name: 'Focaccia', ingredients: '...', price: 6, ... }`)
+   - Function ini di-jalankan untuk setiap item di array
+
+3. **`<Pizza key={pizza.name} pizzaObj={pizza}/>`** (baris 83): JSX yang di-return untuk setiap iteration
+   - Membuat satu `<Pizza/>` component untuk setiap pizza di array
+   - `key={pizza.name}` adalah required prop (akan dijelaskan di bawah)
+   - `pizzaObj={pizza}` mengirim seluruh pizza object sebagai props
+
+**Analogi:**
+```
+Array: [pizza1, pizza2, pizza3, pizza4, pizza5, pizza6]
+     ↓ .map()
+JSX:  [<Pizza/>, <Pizza/>, <Pizza/>, <Pizza/>, <Pizza/>, <Pizza/>]
+```
+
+#### C. Key Attribute - Penting untuk Performance (baris 83)
+
+```javascript
+<Pizza key={pizza.name} pizzaObj={pizza}/>
+```
+
+**Penjelasan:**
+
+- **`key={pizza.name}`**: Unique identifier untuk setiap item di list
+- React menggunakan `key` untuk:
+  - **Track which item changed**: Ketika array berubah, React bisa tahu mana yang ditambah, dihapus, atau diubah
+  - **Preserve component state**: Jika component memiliki state (akan dipelajari later), key memastikan state berada di item yang benar
+  - **Reorder dengan benar**: Jika order berubah, React tahu mana yang mana
+
+**Catatan Penting - Mengapa tidak pakai index?**
+```javascript
+// ❌ JANGAN: menggunakan index sebagai key
+{pizzaData.map((pizza, index) => (
+  <Pizza key={index} pizzaObj={pizza}/>
+))}
+
+// ✅ BAIK: menggunakan unique identifier
+{pizzaData.map((pizza) => (
+  <Pizza key={pizza.name} pizzaObj={pizza}/>
+))}
+```
+
+Menggunakan `index` sebagai key bisa menyebabkan bugs kalau list di-reorder atau ada item yang dihapus.
+
+#### D. Passing Entire Object sebagai Props - Object Spreading
+
+**Opsi 1 - Sekarang (Recommended):**
+```javascript
+<Pizza key={pizza.name} pizzaObj={pizza}/>
+
+// Di Pizza component:
+function Pizza (props) {
+  // akses dengan props.pizzaObj.name, props.pizzaObj.price, dll
+  <h3>{props.pizzaObj.name}</h3>
+}
+```
+
+**Opsi 2 - Spread Operator (untuk future):**
+```javascript
+<Pizza key={pizza.name} {...pizza}/>
+
+// Di Pizza component:
+function Pizza ({ name, price, ingredients, photoName, soldOut }) {
+  // langsung akses: name, price, ingredients, dll
+  <h3>{name}</h3>
+}
+```
+
+**Penjelasan spread operator:**
+- `{...pizza}` mengubah object `{ name: 'Focaccia', price: 6, ... }` menjadi individual props
+- Sama dengan menulis: `<Pizza name={pizza.name} price={pizza.price} ingredients={pizza.ingredients} ... />`
+- Lebih clean dan singkat, tapi perlu destructuring di child component
+
+#### E. Pizza Component Menerima Props (baris 90-101)
+
+```javascript
+function Pizza (props) {
+  return (
+    <li className='pizza'>
+      <img src={props.pizzaObj.photoName} alt={props.pizzaObj.name}/>
+      <div>
+        <h3>{props.pizzaObj.name}</h3>
+        <p>{props.pizzaObj.ingredients}</p>
+        <span>${props.pizzaObj.price}</span>
+      </div>
+    </li>
+  )
+}
+```
+
+**Penjelasan:**
+
+- **`function Pizza (props)`** (baris 90): Menerima satu parameter `props` yang berisi `{ pizzaObj: { ... } }`
+- **`props.pizzaObj`** (baris 93, 95, 96, 97): Mengakses pizza object dari props
+- **`{props.pizzaObj.name}`** (baris 95): Menampilkan nama pizza
+- **`{props.pizzaObj.ingredients}`** (baris 96): Menampilkan bahan-bahan
+- **`${props.pizzaObj.price}`** (baris 97): Menampilkan harga dengan string interpolation
+
+### Complete Data Flow:
+
+```
+pizzaData (Array)
+    ↓
+Menu component
+    ↓
+.map() - transform array menjadi JSX
+    ↓
+<ul><li><Pizza/></li>...</ul>
+    ↓
+Pizza component menerima props.pizzaObj
+    ↓
+Display gambar, nama, bahan, harga
+```
+
+### Keuntungan Rendering Lists Dengan .map():
+
+1. **Dynamic**: Bisa menampilkan banyak items tanpa repetisi code
+2. **Maintainable**: Kalau data berubah, component otomatis update
+3. **Scalable**: Bisa handle 10 items atau 1000 items dengan code yang sama
+4. **Reusable**: Pizza component dipakai untuk setiap item
+
+### Contoh Modifikasi - Conditional Rendering dengan List:
+
+```javascript
+// Highlight sold-out items
+function Pizza ({ pizzaObj }) {
+  return (
+    <li className={pizzaObj.soldOut ? 'pizza sold-out' : 'pizza'}>
+      // ... rest of component
+    </li>
+  )
+}
+```
+
+Menggunakan ternary operator untuk conditional CSS class berdasarkan `soldOut` property.
+
+### Troubleshooting Common Errors:
+
+**Error 1: "Each child in a list should have a unique 'key' prop"**
+- Solusi: Tambahkan `key` attribute ke setiap item yang di-render dari list
+
+**Error 2: Component tidak update ketika array berubah**
+- Possible cause: Array reference tidak berubah (technical issue dengan state)
+- Solusi: Pastikan menggunakan `.map()` di component yang benar
+
+**Error 3: Items melompat/berubah urutan**
+- Possible cause: Menggunakan index sebagai key
+- Solusi: Gunakan unique identifier seperti `pizza.name` atau `pizza.id`
+
+---
+
+## 5. Macam-macam Cara Menambahkan Styling di React
 
 **Lokasi:** `src/index.css` dan penggunaan di components
 
@@ -405,7 +638,7 @@ FONT SIZE SYSTEM (px)
 
 ---
 
-## 5. Array Data dan Map (Future Development)
+## 6. Array Data dan Map (Future Development)
 
 **Lokasi:** `src/index.js` baris 5-48
 
@@ -459,40 +692,105 @@ function Menu () {
 4. ✅ **Component Composition**: Membuat struktur aplikasi dari komponen-komponen kecil
 5. ✅ **Props**: Mengirim data dari parent ke child components
 6. ✅ **Dynamic Content**: Menggunakan JavaScript expressions dalam JSX dengan curly braces
-7. ✅ **CSS Classes**: Styling components dengan external CSS file
-8. ✅ **Flexbox & Grid**: Layout dengan modern CSS
-9. ✅ **React.StrictMode**: Development tool untuk mendeteksi bugs
+7. ✅ **Array.map()**: Transform array menjadi multiple React components
+8. ✅ **Key Attribute**: Unique identifier untuk list items (penting untuk React performance)
+9. ✅ **Semantic HTML**: Menggunakan `<ul>`, `<li>` untuk list items
+10. ✅ **CSS Classes**: Styling components dengan external CSS file
+11. ✅ **Flexbox & Grid**: Layout dengan modern CSS
+12. ✅ **React.StrictMode**: Development tool untuk mendeteksi bugs
 
 ---
 
 ## Tips untuk Pengembangan Lebih Lanjut
 
-### 1. Rendering Multiple Pizzas
-Gunakan `pizzaData.map()` untuk render semua pizza dari array alih-alih hardcode satu pizza.
+### 1. ✅ Rendering Multiple Pizzas (SUDAH IMPLEMENTED)
+Sekarang menggunakan `pizzaData.map()` untuk render semua 6 pizzas dari array secara dinamis dengan semantic `<ul>` dan `<li>` tags.
 
-### 2. Conditional Rendering
-Gunakan variable `isOpen` di Footer untuk show/hide konten berdasarkan jam buka toko:
+**Next Step:** Tambahkan filter atau search untuk filter pizzas berdasarkan ingredient atau price range.
+
+### 2. Conditional Rendering - Show/Hide based on Condition
+Gunakan ternary operator untuk show/hide konten:
+
 ```javascript
+// Di Footer - Show opening hours
 {isOpen ? <p>We're open!</p> : <p>Sorry, we're closed</p>}
+
+// Di Pizza - Show sold-out status
+{pizza.soldOut ? <p className="sold-out">SOLD OUT</p> : <p>Available</p>}
 ```
 
-### 3. Conditional CSS Classes
-Tambahkan class dinamis berdasarkan state:
+### 3. ✅ Conditional CSS Classes (READY TO IMPLEMENT)
+Tambahkan dynamic class berdasarkan `soldOut` property:
+
 ```javascript
-<div className={pizza.soldOut ? 'pizza sold-out' : 'pizza'}>
+function Pizza ({ pizzaObj }) {
+  return (
+    <li className={pizzaObj.soldOut ? 'pizza sold-out' : 'pizza'}>
+      {/* content */}
+    </li>
+  )
+}
 ```
 
-### 4. State Management (Untuk Future)
-Ketika perlu data yang berubah, gunakan `useState` hook:
-```javascript
-const [count, setCount] = useState(0)
+CSS already ada di `index.css`:
+```css
+.pizza.sold-out {
+  color: #888;
+}
+.pizza.sold-out img {
+  filter: grayscale();
+  opacity: 0.8;
+}
 ```
 
-### 5. Destructuring Props
-Alih-alih `props.name`, gunakan destructuring untuk cleaner code:
+### 4. Destructuring Props - Cleaner Code
+Alih-alih `props.pizzaObj.name`, destructure di function parameter:
+
 ```javascript
-function Pizza ({ name, ingredients, price, photoName }) {
-  // langsung gunakan name, ingredients, dll
+// Sebelum:
+function Pizza (props) {
+  return <h3>{props.pizzaObj.name}</h3>
+}
+
+// Sesudah (lebih clean):
+function Pizza ({ pizzaObj }) {
+  return <h3>{pizzaObj.name}</h3>
+}
+
+// Atau destructure lebih dalam:
+function Pizza ({ pizzaObj: { name, price, ingredients, photoName } }) {
+  return <h3>{name}</h3>
+}
+```
+
+### 5. State Management dengan useState (Untuk Future)
+Ketika perlu data yang berubah (interaktif), gunakan `useState` hook:
+
+```javascript
+import { useState } from 'react'
+
+function Menu () {
+  const [cart, setCart] = useState([])
+
+  return (
+    // component yang bisa add/remove items dari cart
+  )
+}
+```
+
+### 6. Spread Operator untuk Props
+Gunakan spread operator untuk pass multiple props lebih singkat:
+
+```javascript
+// Opsi 1 - Sekarang:
+<Pizza key={pizza.name} pizzaObj={pizza}/>
+
+// Opsi 2 - Spread (perlu destructure di Pizza):
+<Pizza key={pizza.name} {...pizza}/>
+
+// Pizza component:
+function Pizza ({ name, price, ingredients, photoName, soldOut }) {
+  // bisa langsung gunakan name, price, dll
 }
 ```
 
